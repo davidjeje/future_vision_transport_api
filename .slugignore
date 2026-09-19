@@ -2,6 +2,7 @@
 /.agents
 /.codex
 /tests
+/.pytest_cache
 /task
 __pycache__
 *.pyc
