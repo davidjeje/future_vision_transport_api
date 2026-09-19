@@ -1,0 +1,11 @@
+/.venv
+/.agents
+/.codex
+/tests
+/task
+__pycache__
+*.pyc
+*.ipynb
+*:Zone.Identifier
+/api/model/meilleurs_poids.pt
+/api/model/unet_mobilenetv2_config.json
