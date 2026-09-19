@@ -1,11 +1,9 @@
 {
-  "nom_modele": "unet_mobilenetv2",
-  "architecture": "U-Net + MobileNetV2",
-
+  "nom_modele": "segformer_sans_augmentation",
+  "architecture": "SegFormer B0",
   "nombre_classes": 8,
   "largeur_image": 256,
   "hauteur_image": 128,
-
   "classes": [
     "vide",
     "plat",
@@ -16,34 +14,36 @@
     "humain",
     "vehicule"
   ],
-
   "preprocessing": {
     "mode_couleur": "RGB",
-    "normalisation": "division_par_255",
-    "format_tenseur": "CHW",
+    "normalisation": "integree_au_modele",
+    "format_tenseur": "HWC",
     "interpolation_image": "INTER_LINEAR",
     "interpolation_masque": "INTER_NEAREST"
   },
-
-  "run_id": "325e42b82ae64fa09e57dc134ad4e901",
-
+  "run_id": "ed97506b2fe3429da532e5fb6a1b8d46",
   "metriques_validation": {
-    "miou": 0.7026506291154422,
-    "dice": 0.786283837157694,
-    "perte": 0.19468517641493138,
-    "precision_pixel": 0.9319270429195173
+    "miou": 0.7344246506690979,
+    "dice": 0.822814404964447,
+    "perte": 0.20930472016334534,
+    "precision_pixel": 0.9317523837089539
   },
-
   "entrainement": {
-    "meilleure_epoque": 28,
-    "taille_lot": 4,
-    "taux_apprentissage": 0.0001,
-    "nombre_epoques_maximum": 30,
-    "augmentation": true,
-    "graine": 42,
-    "images_entrainement": 2379,
-    "images_validation": 595,
+    "meilleure_epoque": 27,
+    "taille_lot": 2,
+    "taux_apprentissage": 0.00012270639657652898,
+    "weight_decay": 0.0003788053001519211,
+    "temps_entrainement_secondes": 49082.482287549996,
+    "backend_keras": "torch",
     "peripherique": "xpu",
-    "temps_entrainement_secondes": 7088.748384682
+    "augmentation": false
+  },
+  "format_modele": "keras",
+  "fichier_modele": "segformer_sans_augmentation.keras",
+  "metriques_test": {
+    "miou_test": 0.7351821660995483,
+    "dice_test": 0.8222697973251343,
+    "perte_test": 0.2067410796880722,
+    "precision_pixel_test": 0.9340819716453552
   }
 }

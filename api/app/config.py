@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
 
     # mock = test sans vrai modèle
-    # local = charge api/model/meilleurs_poids.pt
+    # local = charge le fichier indiqué dans api/model/model_config.json
     model_mode: str = "local"
 
     max_upload_mb: int = 10

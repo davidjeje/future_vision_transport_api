@@ -154,6 +154,8 @@ async def predict(
             image,
             largeur=model_service.largeur,
             hauteur=model_service.hauteur,
+            format_tenseur=model_service.format_tenseur,
+            normalisation=model_service.normalisation,
         )
 
         logger.info(

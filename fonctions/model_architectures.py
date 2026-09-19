@@ -1,5 +1,19 @@
+import os
+
 import torch.nn.functional as F
-import segmentation_models_pytorch as smp
+
+
+def charger_modele_keras(chemin):
+    # Le modèle a été entraîné avec Keras sur PyTorch.
+    os.environ.setdefault("KERAS_BACKEND", "torch")
+    import keras
+    import keras_hub  # Enregistre les couches SegFormer pour la désérialisation.
+
+    if keras.backend.backend() != "torch":
+        raise ValueError("Ce modèle nécessite KERAS_BACKEND=torch.")
+
+    # Les pertes et métriques d'entraînement ne sont pas nécessaires à l'API.
+    return keras.saving.load_model(chemin, compile=False, safe_mode=True)
 
 
 def construire_modele(
@@ -8,6 +22,8 @@ def construire_modele(
     poids_preentraines: bool = False,
 ):
     if nom_modele == "unet_mobilenetv2":
+        import segmentation_models_pytorch as smp
+
         return smp.Unet(
             encoder_name="mobilenet_v2",
             encoder_weights=(

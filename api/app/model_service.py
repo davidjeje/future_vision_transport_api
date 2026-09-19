@@ -21,6 +21,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from fonctions.model_architectures import (
+    charger_modele_keras,
     construire_modele,
     extraire_logits,
 )
@@ -51,6 +52,9 @@ class SegmentationModelService:
         self.hauteur = 128
         self.nombre_classes = 8
         self.model_config: dict = {}
+        self.format_modele = "pytorch"
+        self.format_tenseur = "CHW"
+        self.normalisation = "division_par_255"
         self.info = LoadedModelInfo(mode=settings.model_mode)
 
     @property
@@ -73,32 +77,48 @@ class SegmentationModelService:
         if not CONFIG_PATH.is_file():
             raise FileNotFoundError(f"Configuration introuvable : {CONFIG_PATH}")
 
-        if not WEIGHTS_PATH.is_file():
-            raise FileNotFoundError(f"Poids introuvables : {WEIGHTS_PATH}")
-
         with CONFIG_PATH.open("r", encoding="utf-8") as f:
             self.model_config = json.load(f)
+
+        weights_path = MODEL_DIR / self.model_config.get("fichier_modele", WEIGHTS_PATH.name)
+        if not weights_path.is_file():
+            raise FileNotFoundError(f"Modèle introuvable : {weights_path}")
 
         nom_modele = self.model_config["nom_modele"]
         self.nombre_classes = int(self.model_config["nombre_classes"])
         self.largeur = int(self.model_config["largeur_image"])
         self.hauteur = int(self.model_config["hauteur_image"])
+        self.format_modele = self.model_config.get("format_modele", "pytorch")
+        preprocessing = self.model_config.get("preprocessing", {})
+        self.format_tenseur = preprocessing.get("format_tenseur", "CHW")
+        self.normalisation = preprocessing.get("normalisation", "division_par_255")
 
-        self.model = construire_modele(
-            nom_modele=nom_modele,
-            nombre_classes=self.nombre_classes,
-            poids_preentraines=False,
-        )
+        if self.format_modele == "keras":
+            if self.format_tenseur != "HWC" or self.normalisation != "integree_au_modele":
+                raise ValueError("Le modèle Keras attend une entrée HWC RGB 0..255.")
+            self.model = charger_modele_keras(weights_path)
+            if tuple(self.model.input_shape[1:]) != (self.hauteur, self.largeur, 3):
+                raise ValueError("Les dimensions configurées ne correspondent pas au modèle Keras.")
+            if tuple(self.model.output_shape[1:]) != (self.hauteur, self.largeur, self.nombre_classes):
+                raise ValueError("La sortie Keras ne correspond pas aux dimensions/classes configurées.")
+        elif self.format_modele == "pytorch":
+            self.model = construire_modele(
+                nom_modele=nom_modele,
+                nombre_classes=self.nombre_classes,
+                poids_preentraines=False,
+            )
 
-        loaded = torch.load(
-            WEIGHTS_PATH,
-            map_location=self.device,
-            weights_only=True,
-        )
+            loaded = torch.load(
+                weights_path,
+                map_location=self.device,
+                weights_only=True,
+            )
 
-        state_dict = loaded["state_dict"] if isinstance(loaded, dict) and "state_dict" in loaded else loaded
+            state_dict = loaded["state_dict"] if isinstance(loaded, dict) and "state_dict" in loaded else loaded
+            self.model.load_state_dict(state_dict, strict=True)
+        else:
+            raise ValueError(f"Format de modèle non supporté : {self.format_modele}")
 
-        self.model.load_state_dict(state_dict, strict=True)
         self.model.to(self.device)
         self.model.eval()
 
@@ -128,6 +148,10 @@ class SegmentationModelService:
         tensor = tensor.to(self.device)
 
         with torch.inference_mode():
+            if self.format_modele == "keras":
+                output = self.model(tensor, training=False)
+                return output.argmax(dim=-1).cpu().numpy()
+
             output = self.model(tensor)
             logits = extraire_logits(
                 output,

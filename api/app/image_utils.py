@@ -36,16 +36,15 @@ def image_to_tensor(
     image: Image.Image,
     largeur: int = 256,
     hauteur: int = 128,
+    format_tenseur: str = "CHW",
+    normalisation: str = "division_par_255",
 ) -> torch.Tensor:
     """
-    Reproduit le preprocessing utilisé
-    pendant l'entraînement.
+    Redimensionne l'image RGB et ajoute la dimension batch.
 
-    RGB
-    -> resize
-    -> float32 / 255
-    -> HWC vers CHW
-    -> ajout batch
+    U-Net : float32 / 255, format CHW.
+    SegFormer Keras : float32 0..255, format HWC ; la normalisation
+    ImageNet est déjà intégrée au modèle sauvegardé.
     """
 
     array = np.asarray(image)
@@ -56,18 +55,19 @@ def image_to_tensor(
         interpolation=cv2.INTER_LINEAR,
     )
 
-    array = (
-        array.astype(np.float32)
-        / 255.0
-    )
+    array = array.astype(np.float32)
+    if normalisation == "division_par_255":
+        array /= 255.0
+    elif normalisation != "integree_au_modele":
+        raise ValueError(f"Normalisation non supportée : {normalisation}")
 
     # HWC -> CHW
-    array = np.transpose(
-        array,
-        (2, 0, 1),
-    )
+    if format_tenseur == "CHW":
+        array = np.transpose(array, (2, 0, 1))
+    elif format_tenseur != "HWC":
+        raise ValueError(f"Format de tenseur non supporté : {format_tenseur}")
 
-    # CHW -> BCHW
+    # Ajout de la dimension batch (BCHW ou BHWC).
     array = np.expand_dims(
         array,
         axis=0,
