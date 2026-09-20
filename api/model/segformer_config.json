@@ -1,0 +1,44 @@
+{
+  "nom_modele": "segformer_sans_augmentation",
+  "architecture": "SegFormer B0",
+  "nombre_classes": 8,
+  "largeur_image": 256,
+  "hauteur_image": 128,
+  "classes": [
+    "vide",
+    "plat",
+    "construction",
+    "objet",
+    "nature",
+    "ciel",
+    "humain",
+    "vehicule"
+  ],
+  "preprocessing": {
+    "mode_couleur": "RGB",
+    "normalisation": "integree_au_modele",
+    "format_tenseur": "HWC",
+    "interpolation_image": "INTER_LINEAR",
+    "interpolation_masque": "INTER_NEAREST"
+  },
+  "run_id": "ed97506b2fe3429da532e5fb6a1b8d46",
+  "metriques_validation": {
+    "miou": 0.7344246506690979,
+    "dice": 0.822814404964447,
+    "perte": 0.20930472016334534,
+    "precision_pixel": 0.9317523837089539
+  },
+  "entrainement": {
+    "meilleure_epoque": 27,
+    "taille_lot": 2,
+    "taux_apprentissage": 0.00012270639657652898,
+    "weight_decay": 0.0003788053001519211,
+    "temps_entrainement_secondes": 49082.482287549996,
+    "backend_keras": "torch",
+    "peripherique": "xpu",
+    "augmentation": false,
+    "projection_filters_segformer": 128
+  },
+  "format_modele": "keras",
+  "fichier_modele": "segformer_sans_augmentation.keras"
+}

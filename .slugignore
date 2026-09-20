@@ -10,3 +10,15 @@ __pycache__
 *:Zone.Identifier
 /api/model/meilleurs_poids.pt
 /api/model/unet_mobilenetv2_config.json
+<<<<<<< Updated upstream
+=======
+*.keras
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.safetensors
+*.db
+/.cache
+/.env
+>>>>>>> Stashed changes

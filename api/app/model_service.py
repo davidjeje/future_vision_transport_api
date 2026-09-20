@@ -6,6 +6,7 @@ import sys
 
 import numpy as np
 import torch
+from huggingface_hub import hf_hub_download
 
 from app.config import Settings
 
@@ -68,13 +69,14 @@ class SegmentationModelService:
             self.info = LoadedModelInfo(mode="mock")
             return
 
-        if mode != "local":
-            raise ValueError("MODEL_MODE doit être 'mock' ou 'local'.")
+        config_path = CONFIG_PATH
+        if self.settings.model_name == "segformer_sans_augmentation":
+            config_path = MODEL_DIR / "segformer_config.json"
 
-        if not CONFIG_PATH.is_file():
-            raise FileNotFoundError(f"Configuration introuvable : {CONFIG_PATH}")
+        if not config_path.is_file():
+            raise FileNotFoundError(f"Configuration introuvable : {config_path}")
 
-        with CONFIG_PATH.open("r", encoding="utf-8") as f:
+        with config_path.open("r", encoding="utf-8") as f:
             self.model_config = json.load(f)
 
         self.format_modele = self.model_config["format_modele"]
@@ -82,6 +84,15 @@ class SegmentationModelService:
             raise ValueError("Le runtime de production prend uniquement en charge le format Keras.")
 
         weights_path = MODEL_DIR / self.model_config["fichier_modele"]
+        if mode == "huggingface":
+            if not self.settings.hf_repo_id:
+                raise ValueError("HF_REPO_ID est obligatoire avec MODEL_MODE=huggingface.")
+            weights_path = Path(hf_hub_download(
+                repo_id=self.settings.hf_repo_id,
+                filename=self.model_config["fichier_modele"],
+                revision=self.settings.hf_revision,
+                cache_dir=self.settings.hf_cache_dir,
+            ))
         if not weights_path.is_file():
             raise FileNotFoundError(f"Modèle introuvable : {weights_path}")
 
@@ -96,7 +107,9 @@ class SegmentationModelService:
         if self.format_modele == "keras":
             if self.format_tenseur != "HWC" or self.normalisation != "integree_au_modele":
                 raise ValueError("Le modèle Keras attend une entrée HWC RGB 0..255.")
-            self.model = charger_modele_keras(weights_path)
+            self.model = charger_modele_keras(
+                weights_path, segformer=nom_modele == "segformer_sans_augmentation"
+            )
             if tuple(self.model.input_shape[1:]) != (self.hauteur, self.largeur, 3):
                 raise ValueError("Les dimensions configurées ne correspondent pas au modèle Keras.")
             if tuple(self.model.output_shape[1:]) != (self.hauteur, self.largeur, self.nombre_classes):
@@ -107,7 +120,7 @@ class SegmentationModelService:
         metrics = self.model_config.get("metriques_validation", {})
 
         self.info = LoadedModelInfo(
-            mode="local",
+            mode=mode,
             model_name=nom_modele,
             architecture=self.model_config.get("architecture"),
             run_id=self.model_config.get("run_id"),

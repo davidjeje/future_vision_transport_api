@@ -27,6 +27,13 @@ gunicorn = "^26.0.0"
 uvicorn-worker = "^0.4.0"
 python-multipart = "^0.0.32"
 pydantic-settings = "^2.15.0"
+huggingface-hub = "^1.32.0"
+
+[tool.poetry.group.segformer]
+optional = true
+
+[tool.poetry.group.segformer.dependencies]
+keras-hub = "0.30.0"
 
 # Ancien U-Net : installation locale explicite uniquement.
 [tool.poetry.group.legacy]
